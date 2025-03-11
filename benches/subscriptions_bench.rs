@@ -17,10 +17,10 @@ struct SubscriptionNoOption {
     last_delivered: u32,
 }
 
-/// Builds a vector of 10M subscriptions with 10% of them paused
-fn build_some_paused() -> Vec<Subscription> {
-    let active = 9_000_000;
-    let paused = 1_000_000;
+/// Builds a vector of subscriptions with 10% of them paused
+fn build_some_paused(upper: u32) -> Vec<Subscription> {
+    let active = upper * 9 / 10;
+    let paused = upper / 10;
     let mut subscriptions: Vec<Subscription> = vec![];
     for _ in 0..active {
         subscriptions.push(Subscription {
@@ -37,9 +37,9 @@ fn build_some_paused() -> Vec<Subscription> {
     return subscriptions;
 }
 
-/// Builds a vector of 9M subscriptions all active
-fn build_only_active() -> Vec<Subscription> {
-    let active = 9_000_000;
+/// Builds a vector of subscriptions only active
+fn build_only_active(upper: u32) -> Vec<Subscription> {
+    let active = upper * 9 / 10;
     let mut subscriptions: Vec<Subscription> = vec![];
     for _ in 0..active {
         subscriptions.push(Subscription {
@@ -57,10 +57,10 @@ fn iter_sub(subscriptions: Vec<Subscription>) {
     {}
 }
 
-/// Builds a vector of 10M subscriptions with 10% of them paused
-fn build_some_paused_no() -> Vec<SubscriptionNoOption> {
-    let active = 9_000_000;
-    let paused = 1_000_000;
+/// Builds a vector of subscriptions with 10% of them paused
+fn build_some_paused_no(upper: u32) -> Vec<SubscriptionNoOption> {
+    let active = upper * 9 / 10;
+    let paused = upper / 10;
     let mut subscriptions: Vec<SubscriptionNoOption> = vec![];
     for _ in 0..active {
         subscriptions.push(SubscriptionNoOption {
@@ -77,9 +77,9 @@ fn build_some_paused_no() -> Vec<SubscriptionNoOption> {
     return subscriptions;
 }
 
-/// Builds a vector of 9M subscriptions all active
-fn build_only_active_no() -> Vec<SubscriptionNoOption> {
-    let active = 9_000_000;
+/// Builds a vector of subscriptions all active
+fn build_only_active_no(upper: u32) -> Vec<SubscriptionNoOption> {
+    let active = upper * 9 / 10;
     let mut subscriptions: Vec<SubscriptionNoOption> = vec![];
     for _ in 0..active {
         subscriptions.push(SubscriptionNoOption {
@@ -98,21 +98,42 @@ fn iter_sub_no(subscriptions: Vec<SubscriptionNoOption>) {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
+    // let test a case with 10M subscriptions
+    let upper = 10_000_000;
     // last_delivered being an option
-    let subs = build_some_paused();
+    let subs = build_some_paused(upper);
     c.bench_function("sub 9M active + 1M paused", |b| {
         b.iter(|| iter_sub(subs.clone()))
     });
-    let subs = build_only_active();
+    let subs = build_only_active(upper);
     c.bench_function("sub 9M active", |b| b.iter(|| iter_sub(subs.clone())));
 
     // laste_delivered not being an option
-    let subs = build_some_paused_no();
+    let subs = build_some_paused_no(upper);
     c.bench_function("sub noopt 9M active + 1M paused", |b| {
         b.iter(|| iter_sub_no(subs.clone()))
     });
-    let subs = build_only_active_no();
+    let subs = build_only_active_no(upper);
     c.bench_function("sub noopt 9M active", |b| b.iter(|| iter_sub_no(subs.clone())));
+
+
+    // let test a case with 10K subscriptions
+    let upper = 10_000;
+    // last_delivered being an option
+    let subs = build_some_paused(upper);
+    c.bench_function("sub 9K active + 1K paused", |b| {
+        b.iter(|| iter_sub(subs.clone()))
+    });
+    let subs = build_only_active(upper);
+    c.bench_function("sub 9K active", |b| b.iter(|| iter_sub(subs.clone())));
+
+    // laste_delivered not being an option
+    let subs = build_some_paused_no(upper);
+    c.bench_function("sub noopt 9K active + 1K paused", |b| {
+        b.iter(|| iter_sub_no(subs.clone()))
+    });
+    let subs = build_only_active_no(upper);
+    c.bench_function("sub noopt 9K active", |b| b.iter(|| iter_sub_no(subs.clone())));
 }
 
 criterion_group!(benches, criterion_benchmark);
